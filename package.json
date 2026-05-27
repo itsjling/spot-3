@@ -1,11 +1,35 @@
 {
   "name": "spot",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "private": true,
+  "description": "An intelligent record-keeper for interesting places.",
+  "license": "ISC",
   "author": "",
-  "license": "ISC"
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "turbo run build",
+    "codegen": "turbo run codegen",
+    "dev": "turbo run dev",
+    "dev:convex": "npm run dev --workspace @spot/backend --",
+    "dev:mobile": "npm run dev --workspace @spot/mobile --",
+    "fix": "turbo run fix fix:root",
+    "format": "npm run fix",
+    "fix:root": "ultracite fix",
+    "lint": "turbo run lint lint:root",
+    "lint:root": "ultracite check",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.52.0",
+    "oxlint": "^1.67.0",
+    "turbo": "^2.6.1",
+    "typescript": "~5.9.2",
+    "ultracite": "^7.8.0"
+  },
+  "packageManager": "npm@10.9.4"
 }

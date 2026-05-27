@@ -7,7 +7,7 @@ last_updated: 2026-05-23
 
 ## Target problem
 
-It's hard to keep track of and organize interesting places you want to visit — local spots someone told you about, places you've seen online. The crux: when you encounter a cool place in the wild, the friction between *encountering it* and *having it in a form you can act on later* is too high, so it gets lost.
+It's hard to keep track of and organize interesting places you want to visit — local spots someone told you about, places you've seen online. The crux: when you encounter a cool place in the wild, the friction between _encountering it_ and _having it in a form you can act on later_ is too high, so it gets lost.
 
 ## Our approach
 

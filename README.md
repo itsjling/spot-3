@@ -4,7 +4,7 @@ An intelligent record-keeper for interesting places — local spots you've heard
 
 ## Goals
 
-Spot exists because the friction between *encountering* a place and *having it in a form you can act on later* is too high. Most spots get lost. The product is built on three load-bearing bets:
+Spot exists because the friction between _encountering_ a place and _having it in a form you can act on later_ is too high. Most spots get lost. The product is built on three load-bearing bets:
 
 1. **Capture from anywhere** — share sheet, link paste, voice, friend's share. Saving should never feel daunting.
 2. **Category-first retrieval** — categories are the primary surface for finding what you saved, with location-aware and AI-driven search as supporting tools.

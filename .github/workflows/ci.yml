@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  codegen:
+    runs-on: ubuntu-latest
+    env:
+      # Lets `convex dev --once` run without a real deployment.
+      # https://docs.convex.dev/ai/using-convex-with-background-agents
+      CONVEX_AGENT_MODE: anonymous
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Regenerate Convex types in anonymous mode
+        working-directory: packages/backend
+        run: npx convex dev --once
+      - name: Fail if codegen drifted
+        run: |
+          if [ -n "$(git status --porcelain packages/backend/convex/_generated)" ]; then
+            echo "::error::convex codegen produced changes — regenerate locally and commit packages/backend/convex/_generated/"
+            git status packages/backend/convex/_generated
+            git --no-pager diff packages/backend/convex/_generated
+            exit 1
+          fi
