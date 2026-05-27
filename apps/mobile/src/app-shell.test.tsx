@@ -1,3 +1,5 @@
+// oxlint's `jest/no-confusing-set-timeout` mis-fires on every `jest.fn()` call
+// because the matcher only sees `jest.*` and assumes it could be `jest.setTimeout`.
 /* eslint-disable jest/no-confusing-set-timeout */
 import { describe, expect, it, jest } from "@jest/globals";
 import { render, screen, userEvent } from "@testing-library/react-native";

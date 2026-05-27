@@ -12,7 +12,6 @@ export default defineConfig({
     ".expo/**",
     ".turbo/**",
     "**/.turbo/**",
-    "convex/_generated/**",
     "node_modules/**",
     "packages/backend/convex/_generated/**",
   ],
