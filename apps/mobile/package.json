@@ -6,10 +6,10 @@
   "main": "expo-router/entry",
   "scripts": {
     "build": "expo export --platform ios",
-    "check": "ultracite check .",
     "dev": "expo start",
     "fix": "ultracite fix .",
     "ios": "expo start --ios",
+    "lint": "ultracite check .",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit"

@@ -13,10 +13,10 @@
     }
   },
   "scripts": {
-    "check": "ultracite check .",
     "codegen": "convex codegen",
     "dev": "convex dev",
     "fix": "ultracite fix .",
+    "lint": "ultracite check .",
     "typecheck": "tsc --project convex/tsconfig.json --noEmit"
   },
   "dependencies": {

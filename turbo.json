@@ -5,8 +5,8 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "build/**", ".expo/**"]
     },
-    "check": {
-      "dependsOn": ["^check"]
+    "lint": {
+      "dependsOn": ["^lint"]
     },
     "codegen": {
       "cache": false

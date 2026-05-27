@@ -12,7 +12,6 @@
   "type": "module",
   "scripts": {
     "build": "turbo run build",
-    "check": "turbo run check lint:root",
     "codegen": "turbo run codegen",
     "dev": "turbo run dev",
     "dev:convex": "npm run dev --workspace @spot/backend --",
@@ -20,7 +19,7 @@
     "fix": "turbo run fix fix:root",
     "format": "npm run fix",
     "fix:root": "ultracite fix",
-    "lint": "npm run check",
+    "lint": "turbo run lint lint:root",
     "lint:root": "ultracite check",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck"
