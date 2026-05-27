@@ -1,0 +1,358 @@
+╭─── Claude Code v2.1.152 ─────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting        │
+│              Welcome back Justin Ling!             │ started                 │
+│                                                    │ Run /init to create a … │
+│                       ▐▛███▜▌                      │ ─────────────────────── │
+│                      ▝▜█████▛▘                     │ What's new              │
+│                        ▘▘ ▝▝                       │ `/code-review --fix` n… │
+│    Opus 4.7 · Claude Pro · jlinged@gmail.com's     │ Skills and slash comma… │
+│    Organization                                    │ Added `/reload-skills`… │
+│          ~/Documents/work/spot/spot-app-3          │ /release-notes for more │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+❯ /grill-me on the strategy and help me formulate an mvp                        
+
+⏺ Skill(grill-me)
+  ⎿  Successfully loaded skill
+
+  Read 4 files, listed 4 directories (ctrl+o to expand)
+
+⏺ I've read your STRATEGY.md. No CONTEXT.md, no ADRs, no code yet — so this is
+  greenfield MVP scoping, not a refactor. Good place to be.
+
+  Before we walk down branches of the tree, I want to anchor on the root
+  question, because every MVP scope decision falls out of it.
+
+  Your strategy names three load-bearing bets: (1) frictionless capture, (2)
+  category-first retrieval, (3) social by design. An MVP can't test all three at
+   once — at least one has to be deferred or stubbed, because they have very
+  different scopes (capture = a share extension; retrieval = enough saved data
+  to organize; social = at least 2 real users with a relationship). The bet you
+  put first determines what's in v1 and what gets cut.
+
+  My recommendation: bet #1 (frictionless capture) is the riskiest and most
+  foundational. If capture isn't friction-free, no one ever accumulates enough
+  spots for retrieval to matter, and social can't ride on top of an empty
+  collection. Categories are valuable but secondary — you can stub them as
+  "uncategorized" and ship. Social cannot be the MVP focus because you have no
+  users yet; it's a v2-or-later bet that only activates once capture works for a
+   single person.
+
+⏺ User answered Claude's questions:
+  ⎿  · Which of the three load-bearing bets does the MVP exist to validate 
+     first? → Frictionless capture (Recommended)
+
+⏺ Good — capture is the bet. Now the next branch falls out: platform.
+  Capture-from-anywhere only feels magical when you can hook the OS share sheet,
+   and that constraint shapes the whole stack choice.
+
+  My recommendation: iOS-only, native Swift. The share extension is
+  non-negotiable for the bet you just picked, and iOS share extensions in React
+  Native / Expo are notoriously painful (App Groups, native bridges, extension
+  memory limits). Going native also halves the surface area vs. cross-platform.
+  Android is deferrable until v2; web is a sad substitute for a share sheet. The
+   "foodies who travel" demographic also skews iPhone-heavy, and you're
+  personally in the Apple ecosystem so dogfooding is trivial.
+
+  The counter-argument is if you need a friend on Android to test social with —
+  but we already deferred social, so that pressure isn't there yet.
+
+⏺ User answered Claude's questions:
+  ⎿  · What platform(s) does the MVP target? → iOS-only, React Native / Expo
+
+⏺ Got it — Expo/React Native, eyes open on the share extension pain. Note for
+  later: you'll likely lean on expo-share-extension (community pkg) or write a
+  small native iOS extension target that writes to an App Group container and
+  pings JS via deep link. Worth budgeting a real spike for that one piece.
+
+  Next branch: who is user 1, and how many users does the MVP have to serve?
+  This isn't a market-sizing question — it's a scope question. Each step up the
+  ladder forces more code (auth, onboarding, account recovery, abuse handling,
+  App Store review).
+
+  My recommendation: just you, dogfooded via TestFlight (or Expo dev client) on 
+  your own phone, for 2–4 weeks. The bet is "capture friction is low enough that
+   real save behavior emerges." You'll know inside a week whether you save
+  spots. If you don't, no number of friends will. This skips auth entirely
+  (single-device, local-only data), skips onboarding (you know how it works),
+  skips App Store review. Once it passes the personal-utility test, then expand
+  to a handful of friends with a TestFlight link — at which point you add only
+  what they need.
+
+⏺ User answered Claude's questions:
+  ⎿  · Who is user 1 of the MVP, and what's the audience size you're scoping 
+     for? → You + 5–10 close friends via TestFlight
+
+⏺ TestFlight + friends shifts the scope a bit, but doesn't force as much infra
+  as you might think — we'll come back to whether you need cloud sync, auth, or
+  a backend (my lean: no, even for friends).
+
+  Now let's pin down what "capture" actually is in v1. The strategy lists share
+  sheet, link paste, voice, manual entry, friend's share. For an MVP testing the
+   friction bet, you need one primary surface; everything else is a distraction.
+
+  My recommendation: iOS share sheet for URL/text + an in-app paste fallback. 
+  Nothing else in v1.
+
+  Reasoning: the share sheet is the highest-leverage surface — it captures from
+  Instagram, Maps, Safari, Messages, WhatsApp, anywhere a URL or text gets
+  shared, which covers the bulk of how foodies actually encounter spots.
+  Paste-fallback exists because the share-sheet pipeline will occasionally fail
+  or feel wrong, and you need a debug-grade escape hatch. Voice adds Siri intent
+   complexity (and you can already share from Messages); OCR/screenshot adds an
+  entire ML pipeline; manual entry implies a Places search UI (Google/Apple
+  Places API integration, autocomplete, etc.) that's its own project. Friend's
+  share requires multi-user, which we already deferred.
+
+  The risk in this pick: if a lot of your real-world capture is "I see a place
+  in an Instagram screenshot," the share-sheet-of-the-screenshot path may not
+  extract anything useful (you'd be sharing an image, not a URL). Worth being
+  honest about whether that's how you personally encounter spots.
+
+⏺ User answered Claude's questions:
+  ⎿  · Which capture surface is the v1 wedge? → Share sheet (URL/text) + in-app 
+     paste (Recommended)
+
+⏺ Locked. Now the question that's been hanging implicitly: when the share sheet 
+  hands you a URL or text blob, what do you turn it into? Because "a saved spot"
+   needs to be act-on-able later — at minimum, a name and a location. Otherwise
+  retrieval is broken even with one category.
+
+  My recommendation: Apple MapKit / MKLocalSearch lookup, on-device, no backend 
+  in v1. The flow: share sheet receives URL/text → simple extraction (regex on
+  common patterns: Apple Maps URLs encode the place directly; Google Maps URLs
+  have coords/place IDs; for plain text or article URLs, grab the title + try to
+   pull a place name) → query MKLocalSearch → store the resolved place (name,
+  address, coords, category) + the original URL as a "source."
+
+  Reasoning: MapKit is free, key-less, on-device, no backend required, no auth
+  required. Quality is "good enough" for major foodie locations in big cities —
+  which is where your users will mostly be. Google Places is better data but
+  requires a backend to hide the API key (you cannot ship an unproxied Google
+  API key in a client; it'll get scraped within hours). LLM-based extraction is
+  even better but adds cost + a server. Both are reasonable v2 upgrades when
+  you've validated the bet.
+
+  The risk in this pick: international / very-long-tail spots may not resolve
+  cleanly via MapKit. Acceptable v1 fallback: if no MapKit match, save the raw
+  URL + title as a "rough" spot the user can manually fix later.
+
+⏺ User answered Claude's questions:
+  ⎿  · How rich is a saved spot in v1, and where does that resolution happen? → 
+     LLM extraction + Google Places via backend
+
+⏺ Bold pick — that's a real bet on capture quality. Walking in with eyes open:
+  this decision means you're now building a backend, an LLM key budget, a Google
+   Places key budget, and probably rate-limiting. Realistic v1 timeline shifts
+  from ~2–3 weeks (MapKit-only) to ~4–6 weeks. The upside is the magic moment is
+   much more reliable, which directly tests the friction bet.
+
+  Two questions cascade from this:
+
+  1. Does the backend require user auth, or is it an open extraction endpoint?
+  (Auth → cloud sync becomes trivial → easier path to social later. No auth →
+  simpler, but risk of cost abuse.)
+  2. Where does the backend live and what LLM?
+
+  Let me ask the auth question first because it has the bigger downstream
+  effect.
+
+  My recommendation: No auth in v1; open extraction-only endpoint, rate-limited 
+  by IP, with the LLM tier capped at Haiku 4.5 (cheap and fast). Storage stays 
+  local on the device. This preserves the "5–10 friends, no onboarding tax"
+  idea: each friend installs from TestFlight, shares to the app, gets back a
+  resolved place, stored locally. No accounts, no cloud sync, no signup screen.
+
+  Cost math sanity check at this scale: 10 friends × maybe 5 saves/day = 50
+  calls/day = ~1.5k/month. Claude Haiku 4.5 extraction is ~fractions of a cent
+  per call; Google Places Find Place is ~$0.017 each → ~$25/month worst case.
+  Trivial. Even an order of magnitude worse is fine.
+
+  Counter-argument: if you're going to need auth eventually for social and cloud
+   sync, adding Sign in with Apple now is cheap (~half a day with
+  expo-apple-authentication + a JWT verification on the backend) and saves a
+  painful migration later when your friends already have local data they don't
+  want to lose. This is a real "pay-now-or-pay-later" call.
+
+⏺ User answered Claude's questions:
+  ⎿  · Does v1 have user accounts, and what's the storage model that falls out 
+     of it? → Convex will be the database, backend, and auth provider
+
+⏺ Convex is a strong, opinionated choice — TS-first, reactive queries,
+  serverless functions and auth in one box. It collapses the "backend + DB +
+  auth" decision into one vendor, which is the right move when you want to spend
+   zero time on infra plumbing. The tradeoff is vendor lock-in and a bit less
+  flexibility on the LLM/Places integration, but Convex action functions handle
+  external HTTP calls fine so that's not a blocker.
+
+  Three things this implies that I want to grill on next, in order:
+  1. Auth method on top of Convex (anonymous? Clerk? Sign in with Apple?
+  Convex's built-in?)
+  2. How the iOS share extension talks to Convex (extensions are sandboxed; they
+   can't share React state with the main app)
+  3. Schema for a spot
+
+  Let's start with auth, since it determines onboarding friction — which is
+  exactly the friction we said the MVP exists to test.
+
+  My recommendation: Convex anonymous auth in v1, with a deferred "link to Apple
+   ID" upgrade path. Convex supports anonymous identities — each fresh install
+  gets an auto-issued user, spots are written keyed to that user, no signup
+  screen. Your 5–10 friends install via TestFlight, hit "share to Spot," it just
+   works. The price is fragility: if they delete + reinstall, the anonymous
+  identity is gone and so is their data. For an MVP that's acceptable — you'll
+  tell them "this is alpha, don't expect persistence." When you're ready for v2,
+   you add a "Sign in with Apple to keep your spots" flow that links the anon
+  user → an Apple ID.
+
+  Counter-argument: if any of your 10 friends are likely to install on two
+  devices (iPhone + iPad), or are paranoid about losing data, anonymous auth
+  fails them. In that case, Sign in with Apple day-one (via Clerk's Convex
+  integration, or Convex's own auth) is ~half a day extra and removes the future
+   migration.
+
+⏺ User answered Claude's questions:
+  ⎿  · What auth method on top of Convex? → Convex built-in email/password or 
+     magic link
+
+⏺ Noted. Email/magic-link is the highest-friction auth flow (email switch, tab
+  back, etc.) — worth flagging that this puts an explicit friction step in the
+  onboarding path, which doesn't directly contaminate the capture-friction
+  metric (since onboarding is one-time), but does mean a bigger drop-off before
+  the first save. As long as you're measuring time-to-save post-onboarding, the
+  bet stays cleanly testable. Convex's @convex-dev/auth package supports both;
+  magic link is probably the better of the two (no password storage /
+  forgotten-password flow).
+
+  Bookmarking for week-1 spike: the iOS share extension ↔ Convex bridge
+  (extensions are sandboxed; you'll need an App Group + Convex auth token
+  sharing). Not a strategy-level decision; it's a technical risk to retire early
+   in implementation.
+
+  Moving up a level, the next branch is what does the post-save experience look 
+  like in v1? Because if "save" is the whole app, the bet collapses on its own —
+   your friends will save 3 spots, never see them again, and lose interest.
+  Retrieval is stubbed, but the stub still has to exist.
+
+  My recommendation: flat reverse-chronological list + spot detail + "mark 
+  visited" toggle + basic name/notes text search. No categories (everything is
+  one implicit bucket), no map view, no AI ask, no trip planning. Concretely:
+
+  - List view (home): reverse-chrono cards showing name, address, thumbnail
+  (Google Places photo if available), source. Pull-to-refresh.
+  - Detail view: name, address, coords, "Open in Maps" button, source URL link,
+  free-text notes field, "Mark visited" toggle with date, delete.
+  - Search: single text field, fuzzy match on name + notes. No filters.
+
+  Why "mark visited" specifically: it's one of your strategy metrics
+  (marked-visited rate is the loop-closing signal), it's a one-line schema add,
+  and without it you can't measure whether the product is actually working as a
+  record-keeper. Categories I'd defer entirely — they're a v2 track per the
+  strategy, and "one flat list of 30–50 spots" is perfectly browsable for the
+  MVP volume.
+
+⏺ User answered Claude's questions:
+  ⎿  · What's the v1 retrieval / post-save surface? → Flat list + detail + 
+     mark-visited + text search (Recommended)
+⏺ Locked. Quick consolidation of the picture so far:
+
+  ┌─────────────────┬────────────────────────────────────────────────────────┐
+  │    Decision     │                         Choice                         │
+  ├─────────────────┼────────────────────────────────────────────────────────┤
+  │ Primary bet     │ Frictionless capture                                   │
+  ├─────────────────┼────────────────────────────────────────────────────────┤
+  │ Platform        │ iOS only, Expo / React Native                          │
+  ├─────────────────┼────────────────────────────────────────────────────────┤
+  │ Audience        │ ~5–10 friends via TestFlight                           │
+  ├─────────────────┼────────────────────────────────────────────────────────┤
+  │ Capture surface │ iOS share sheet (URL/text) + in-app paste              │
+  ├─────────────────┼────────────────────────────────────────────────────────┤
+  │ Spot resolution │ LLM extraction + Google Places via backend             │
+  ├─────────────────┼────────────────────────────────────────────────────────┤
+  │ Backend/DB/auth │ Convex                                                 │
+  ├─────────────────┼────────────────────────────────────────────────────────┤
+  │ Auth method     │ Email magic link via @convex-dev/auth                  │
+  ├─────────────────┼────────────────────────────────────────────────────────┤
+  │ Retrieval v1    │ Flat reverse-chrono list + detail + mark-visited +     │
+  │                 │ text search                                            │
+  └─────────────────┴────────────────────────────────────────────────────────┘
+
+  Explicit not-in-v1 list (so it's on the record): categories, trip planning,
+  social/friends, map view, voice, OCR, manual Places search, multi-device,
+  friend sharing.
+
+  Now I want to ask a question that gets asked too late in most MVPs: what is 
+  the success criterion? Because "ship the MVP and see what happens" is a
+  guarantee of building v2 on vibes. You should commit to a falsifiable
+  threshold before you start, so you don't move the goalposts when the numbers
+  come in.
+
+  My recommendation: dual criterion, qualitative + light quant, time-boxed at 4 
+  weeks of TestFlight use.
+
+  - (a) Founder dogfood test: You save ≥3 spots/week for 4 consecutive weeks
+  without forcing yourself. If you don't, the friction bet failed for the person
+   who cares most. Kill it.
+  - (b) Peer signal: ≥3 of your ~10 TestFlight friends save ≥1 spot in week 2
+  (i.e., return to it without you nudging them). Doesn't have to be a lot — it
+  has to be unprompted.
+  - (c) Loop-closing signal: ≥25% of all saved spots across all users get
+  marked-visited within 30 days. Tests whether saving translates to going.
+
+  If all three pass: it's working, build v2 (which probably means categories,
+  then social). If (a) fails: kill or pivot — the founder isn't using it. If (a)
+   passes but (b) fails: it's a personal utility, not a product — fine outcome,
+  but don't keep building social. If (a) + (b) pass but (c) fails: people are
+  hoarding bookmarks, not visiting — the value hypothesis is broken even if
+  capture isn't.
+
+  At ~10 users, the numbers are noisy by definition — these are read as
+  "directional yes/no," not statistical confidence intervals.
+
+⏺ User answered Claude's questions:
+  ⎿  · What's the MVP's success criterion and time-box? → Dual criterion @ 4 
+     weeks: founder + peer + loop (Recommended)
+
+⏺ OK. With criteria committed, we need how you'll actually measure them —
+  otherwise the gates are theater. The success criteria require: a count of
+  saves per user per week, a flag for "marked visited within 30 days," and a
+  notion of which friends are active. Each needs an event somewhere.
+
+  My recommendation: store events in a Convex events table directly — no 
+  third-party analytics in v1. At 10 users, Mixpanel/Amplitude/PostHog are
+  overkill, add a vendor, and require a SDK install in both the main app and the
+   share extension (the extension piece is the painful part). Convex is already
+  in the stack; one table + a logEvent mutation gives you everything you need.
+
+  Concrete v1 event set:
+  - app_opened — basic engagement
+  - share_extension_invoked — fires from the extension at open (intent signal —
+  separate from save completion)
+  - spot_saved — props: source (share | paste), resolution_success (bool),
+  latency_ms from invoke to saved, has_coords (bool)
+  - spot_viewed — detail open
+  - spot_marked_visited — for criterion (c)
+
+  You analyze by writing 4–5 Convex queries you call from the dashboard. Replace
+   with PostHog/Amplitude in v2 if needed.
+
+  The thing to be honest about: events from inside the share extension are
+  technically annoying. Extensions are sandboxed and short-lived, and Convex
+  client init has a startup cost. You may end up writing events to App Group
+  shared storage from the extension, then flushing them next time the main app
+  opens. Worth knowing up front so you don't get blindsided.
+
+⏺ User answered Claude's questions:
+  ⎿  · How do you instrument the success metrics? → PostHog (events + funnels + 
+     session replay)
+  ⎿  You've hit your session limit · resets 11pm (Asia/Hong_Kong)
+     /upgrade to increase your usage limit.
+
+✻ Cooked for 6m 39s
+
+❯ /handoff                                                                      
+  ⎿  You've hit your session limit · resets 11pm (Asia/Hong_Kong)
+     /upgrade to increase your usage limit.
+
+✻ Cogitated for 0s

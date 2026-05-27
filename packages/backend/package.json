@@ -1,0 +1,31 @@
+{
+  "name": "@spot/backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./api": {
+      "types": "./convex/_generated/api.d.ts",
+      "default": "./convex/_generated/api.js"
+    },
+    "./data-model": {
+      "types": "./convex/_generated/dataModel.d.ts"
+    }
+  },
+  "scripts": {
+    "check": "ultracite check .",
+    "codegen": "convex codegen",
+    "dev": "convex dev",
+    "fix": "ultracite fix .",
+    "typecheck": "tsc --project convex/tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@auth/core": "0.37.4",
+    "@convex-dev/auth": "^0.0.88",
+    "@spot/domain": "*",
+    "convex": "^1.28.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.2"
+  }
+}
