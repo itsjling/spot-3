@@ -12,6 +12,7 @@
   "type": "module",
   "scripts": {
     "build": "turbo run build",
+    "check": "npm run lint",
     "codegen": "turbo run codegen",
     "dev": "turbo run dev",
     "dev:convex": "npm run dev --workspace @spot/backend --",

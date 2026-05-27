@@ -14,6 +14,10 @@ interface AppShellProps {
   auth?: {
     requestMagicLink(email: string): Promise<void>;
   };
+  capture?: {
+    createFromPaste(source: string): Promise<SavedItem>;
+    savedItems: SavedItem[];
+  };
   location?: {
     requestPermission(): Promise<void> | void;
   };
@@ -22,11 +26,19 @@ interface AppShellProps {
   };
 }
 
+export interface SavedItem {
+  id: string;
+  primaryText: string;
+  secondaryText?: string;
+  status: "pending";
+}
+
 type OnboardingStep = "disclosure" | "location" | "share-sheet";
 
 export const AppShell = ({
   session,
   auth,
+  capture,
   location,
   onboarding,
 }: AppShellProps) => {
@@ -34,6 +46,11 @@ export const AppShell = ({
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [onboardingStep, setOnboardingStep] =
     useState<OnboardingStep>("disclosure");
+  const [pasteSource, setPasteSource] = useState("");
+  const [pasteError, setPasteError] = useState<string | null>(null);
+  const [savedItems, setSavedItems] = useState<SavedItem[]>(
+    capture?.savedItems ?? []
+  );
 
   if (session.status === "signed-out") {
     if (magicLinkSent) {
@@ -151,7 +168,50 @@ export const AppShell = ({
           <Text>Settings</Text>
         </Pressable>
         <Text accessibilityRole="header">Saved spots</Text>
-        <Text selectable>No spots yet</Text>
+        <TextInput
+          accessibilityLabel="Paste a link or text"
+          multiline
+          onChangeText={setPasteSource}
+          placeholder="Paste a link or text"
+          value={pasteSource}
+        />
+        <Pressable
+          accessibilityRole="button"
+          onPress={async () => {
+            const source = pasteSource.trim();
+            if (!source) {
+              setPasteError("Paste a link or text first");
+              return;
+            }
+
+            const savedItem = await capture?.createFromPaste(source);
+            if (savedItem) {
+              setSavedItems((currentItems) => [savedItem, ...currentItems]);
+              setPasteSource("");
+              setPasteError(null);
+            }
+          }}
+        >
+          <Text>Save</Text>
+        </Pressable>
+        {pasteError ? (
+          <Text accessibilityRole="alert" selectable>
+            {pasteError}
+          </Text>
+        ) : null}
+        {savedItems.length === 0 ? (
+          <Text selectable>No spots yet</Text>
+        ) : (
+          savedItems.map((item) => (
+            <View key={item.id}>
+              <Text selectable>{item.primaryText}</Text>
+              {item.secondaryText ? (
+                <Text selectable>{item.secondaryText}</Text>
+              ) : null}
+              <Text selectable>Pending</Text>
+            </View>
+          ))
+        )}
       </View>
     </ScrollView>
   );
