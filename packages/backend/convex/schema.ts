@@ -4,6 +4,20 @@ import { v } from "convex/values";
 
 export default defineSchema({
   ...authTables,
+  captures: defineTable({
+    createdAt: v.number(),
+    isArchived: v.boolean(),
+    rawText: v.string(),
+    sourceDomain: v.optional(v.string()),
+    sourceType: v.literal("paste"),
+    sourceUrl: v.optional(v.string()),
+    status: v.literal("pending"),
+    userId: v.id("users"),
+  }).index("by_userId_and_isArchived_and_createdAt", [
+    "userId",
+    "isArchived",
+    "createdAt",
+  ]),
   users: defineTable({
     email: v.optional(v.string()),
     emailVerificationTime: v.optional(v.number()),

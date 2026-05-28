@@ -17,6 +17,7 @@
     "dev": "convex dev",
     "fix": "ultracite fix .",
     "lint": "ultracite check .",
+    "test": "vitest run",
     "typecheck": "tsc --project convex/tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -26,6 +27,9 @@
     "convex": "^1.28.0"
   },
   "devDependencies": {
-    "typescript": "~5.9.2"
+    "@edge-runtime/vm": "^5.0.0",
+    "convex-test": "^0.0.53",
+    "typescript": "~5.9.2",
+    "vitest": "^4.1.7"
   }
 }

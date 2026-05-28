@@ -5,6 +5,7 @@ import { describe, expect, it, jest } from "@jest/globals";
 import { render, screen, userEvent } from "@testing-library/react-native";
 
 import { AppShell } from "@/src/app-shell";
+import type { SavedItem } from "@/src/app-shell";
 
 describe("appShell", () => {
   it("shows sign-in instead of the saved-items home for signed-out users", () => {
@@ -130,5 +131,65 @@ describe("appShell", () => {
     expect(screen.getByText("No spots yet")).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Settings" })).toBeOnTheScreen();
     expect(screen.queryByTestId("bottom-tab-bar")).not.toBeOnTheScreen();
+  });
+
+  it("lets an onboarded user paste a source and immediately see a pending saved item", async () => {
+    const user = userEvent.setup();
+    const createFromPaste = jest.fn<(source: string) => Promise<SavedItem>>();
+    createFromPaste.mockResolvedValue({
+      id: "capture-1",
+      primaryText: "example.com",
+      secondaryText: "https://example.com/spots/lilia",
+      status: "pending",
+    });
+
+    render(
+      <AppShell
+        capture={{ createFromPaste, savedItems: [] }}
+        session={{
+          onboardingCompleted: true,
+          status: "signed-in",
+          user: { email: "friend@example.com" },
+        }}
+      />
+    );
+
+    await user.type(
+      screen.getByLabelText("Paste a link or text"),
+      "https://example.com/spots/lilia"
+    );
+    await user.press(screen.getByRole("button", { name: "Save" }));
+
+    expect(createFromPaste).toHaveBeenCalledWith(
+      "https://example.com/spots/lilia"
+    );
+    await expect(screen.findByText("example.com")).resolves.toBeOnTheScreen();
+    expect(screen.getByText("Pending")).toBeOnTheScreen();
+    expect(screen.queryByText("No spots yet")).not.toBeOnTheScreen();
+  });
+
+  it("does not create a capture for blank pasted content", async () => {
+    const user = userEvent.setup();
+    const createFromPaste = jest.fn<(source: string) => Promise<SavedItem>>();
+
+    render(
+      <AppShell
+        capture={{ createFromPaste, savedItems: [] }}
+        session={{
+          onboardingCompleted: true,
+          status: "signed-in",
+          user: { email: "friend@example.com" },
+        }}
+      />
+    );
+
+    await user.type(screen.getByLabelText("Paste a link or text"), "   ");
+    await user.press(screen.getByRole("button", { name: "Save" }));
+
+    expect(createFromPaste).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Paste a link or text first"
+    );
+    expect(screen.getByText("No spots yet")).toBeOnTheScreen();
   });
 });
