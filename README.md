@@ -12,4 +12,36 @@ Spot exists because the friction between _encountering_ a place and _having it i
 
 The primary user is the **foodie who loves to travel** — hiring Spot to try new spots around town and to plan trips around the spots they've already saved.
 
-For the full strategy (target problem, metrics, tracks of work), see [`STRATEGY.md`](./STRATEGY.md).
+## Prerequisites
+
+Node.js 22 and npm 10.9.4 (`packageManager` in the root `package.json`). This is an npm workspaces monorepo run with Turborepo. Commands below are from the repo root.
+
+## Install
+
+```sh
+npm install
+```
+
+## Run
+
+```sh
+npm run dev          # every workspace dev script (Expo + Convex)
+npm run dev:mobile   # Expo only (@spot/mobile)
+npm run dev:convex   # Convex only (@spot/backend)
+```
+
+## Verify
+
+```sh
+npm test
+npm run lint
+npm run typecheck
+```
+
+## Where next
+
+- [`AGENTS.md`](./AGENTS.md) — agent entrypoint
+- [`STRATEGY.md`](./STRATEGY.md) — problem, metrics, tracks of work
+- [`docs/agents/`](./docs/agents/) — issue tracker, triage, domain docs
+- [`apps/`](./apps/) — Expo app
+- [`packages/`](./packages/) — Convex backend and domain
